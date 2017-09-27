@@ -1,0 +1,23 @@
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+girf	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+# Homie
+
+setup	KEYWORD2
+loop	KEYWORD2
+SetOnDebugHandler	KEYWORD2
+SetOnAlarmHandler   KEYWORD2
+SetOnAlarmTestHandler   KEYWORD2
+SetOnBatteryWarningHandler  KEYWORD2
+send_message    KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################

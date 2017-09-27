@@ -1,0 +1,32 @@
+{
+  "name": "girf",
+  "version": "0.1.0",
+  "keywords": "smart, home, smoke, detector, sensor, gira",
+  "description": "Library for communication with Gira Dual Q RF Module",
+  "homepage": "https://github.com/metaneutrons/girf/",
+  "license": "LGPL3",
+  "authors":
+  {
+    "name": "Fabian Schmieder",
+    "url": "https://github.com/metaneutrons",
+    "maintainer": true
+  },
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/metaneutrons/girf.git",
+    "branch": "master"
+  },
+  "frameworks": "arduino",
+  "platforms": "avr,atmelsam,espressif32,espressif8266,intel_arc32,microchippic32,ststm32,timsp430,teensy",
+  "export": {
+    "include": [
+      "LICENSE",
+      "keywords.txt",
+      "docs/*",
+      "src/*",
+      "examples/*"
+    ]
+  },
+  "examples": "examples/*.cpp"
+}
