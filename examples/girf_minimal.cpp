@@ -13,7 +13,7 @@
 #include <Arduino.h>
 #include <girf.h>
 
-girf rf = girf(Serial);
+girf rf = girf(Serial1);
 
 // girf Handler
 void OnAlarmTestHandler(bool value) {
@@ -30,7 +30,7 @@ void OnBatteryWarningHandler(bool value) {
 
 void setup() {
   Serial.begin(115200);
-  Serial2.begin(9600);
+  Serial1.begin(9600);
 
   rf.SetOnAlarmTestHandler(OnAlarmTestHandler);
   rf.SetOnAlarmHandler(OnAlarmHandler);
