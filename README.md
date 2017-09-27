@@ -1,7 +1,7 @@
 girf
 ====
 
-An Arduino-framework based library for the communication with the [Gira Dual Q RF Module](https://katalog.gira.de/en/datenblatt.html?id=636882). The main purpose of the library is to get the alerts, test alerts and battery warnings of the remotly connected smokedetectors so they can processed by an arduino compatible device. In conjunction with Marving Roger's excellent [Homie framework](https://github.com/marvinroger/homie) (which is implemented only for ESP8266-based MCUs at the moment) you can easily connect you smokedetectors to your smart home (e.g. by hooking them up to the - once again - excellent [OpenHAB](https://www.openhab.org/) smart home server).
+An Arduino-framework based library for the communication with the [Gira Dual Q RF module](https://katalog.gira.de/en/datenblatt.html?id=636882). The main purpose of the library is to get the alerts, test alerts and battery warnings of the remotly connected smokedetectors so they can processed by an arduino compatible device. In conjunction with Marving Roger's excellent [Homie framework](https://github.com/marvinroger/homie) (which is implemented only for ESP8266-based MCUs at the moment) you can easily connect you smokedetectors to your smart home (e.g. by hooking them up to the - once again - excellent [OpenHAB](https://www.openhab.org/) smart home server).
 
 ## Download
 
@@ -15,9 +15,9 @@ The Git repository on GitHub contains the development version of the library. As
 
 ## Hardware
 
-The [Gira Dual Q RF Module](https://katalog.gira.de/en/datenblatt.html?id=636882) is a battery powered RF module for the 433-ISM-band. It's connected to the Dual Q smokedetector with a serial interface on 9600bps using 3.3V TTL signals via a 10-pin connector. For operation with the library it's necessary to connect the modules RX and TX line to the TX and RX lines of the used microcontroller (e.g. the excellent [Teensy](https://www.pjrc.com/teensy/) or an ESP8266 clone) and a common GND.
+The [Gira Dual Q RF module](https://katalog.gira.de/en/datenblatt.html?id=636882) is a battery powered RF module for the 433-ISM-band. It's connected to the Dual Q smokedetector with a serial interface on 9600bps using 3.3V TTL signals via a 10-pin connector. For operation with the library it's necessary to connect the modules RX and TX line to the TX and RX lines of the used microcontroller (e.g. the excellent [Teensy](https://www.pjrc.com/teensy/) or an ESP8266 clone) and a common GND.
 
-[![Gira RF module pinout](https://github.com/metaneutrons/girf/docs/assets/rf_module.jpeg)]
+[![Gira RF module pinout](https://github.com/metaneutrons/girf/blob/master/docs/assets/rf_module.jpeg)]
 
 Please note that the signals of the RF module are on 3.3V level (although there is a 5V VCC pin). If you want to connect the RF module to a 5V-arduino (e.g. the UNO) you need some level shifter circuit.
 
