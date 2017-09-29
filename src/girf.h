@@ -70,7 +70,8 @@ public:
   void SetOnBatteryWarningHandler(void (*func)(bool));
   void loop();
   // public variables
-
+  uint32_t StatusUpdateInterval =
+      0; // in seconds, 0 means no automatic status updates at all
 private:
 // private functions
 #ifndef GIRF_DEBUG
@@ -94,6 +95,7 @@ private:
   char cmd_send[SIZE_SEND_BUFFER]; // NUL-terminated string of hex string values
   uint cmd_send_counter = 0;
   uint32_t cmd_send_timestamp = millis();
+  uint32_t status_update_timestamp = millis();
   bool _status_alarm_local_test = false;
   bool _status_alarm_local = false;
   bool _status_alarm_wired_test = false;

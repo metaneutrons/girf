@@ -211,7 +211,7 @@ bool girf::process_command(char *cmd) {
 #ifdef GIRF_DEBUG
     debug("RF_DIAGNOSIS");
 #endif
-  break;
+    break;
   case RF_UNKNOWN_08:
 #ifdef GIRF_DEBUG
     debug("RF_UNKNOWN_08");
@@ -359,7 +359,7 @@ void girf::process_byte(char c) {
 }
 
 void girf::loop() {
-
+  // send out buffered messages and manage resends
   if ((cmd_send_counter == 1) ||
       ((cmd_send_counter > 1) && (cmd_send_counter <= MAXIMUM_TX_TRYS + 1) &&
        ((millis() - cmd_send_timestamp) >= ACK_TIMEOUT))) {
@@ -383,8 +383,15 @@ void girf::loop() {
     }
   }
 
+  // processing of incomming bytes
   if (stream.available()) {
     // read the incoming byte:
     process_byte(stream.read());
+  }
+
+  // handle automatic status updates
+  if ((cmd_send_counter == 0) && (StatusUpdateInterval > 0) &&
+      ((millis() - status_update_timestamp) >= StatusUpdateInterval * 1000)) {
+    send_status(false);
   }
 }
