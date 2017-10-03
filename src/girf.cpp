@@ -19,7 +19,12 @@
 */
 
 #include <Arduino.h>
+#include <array>
 #include <girf.h>
+#include <queue>
+#include <string>
+
+// public methods
 
 #ifdef GIRF_DEBUG
 void girf::debug(String message) {
@@ -40,6 +45,10 @@ void girf::SetOnAlarmHandler(void (*func)(bool)) { _OnAlarmHandler = func; }
 void girf::SetOnBatteryWarningHandler(void (*func)(bool)) {
   _OnBatteryWarningHandler = func;
 }
+
+void girf::SendStatus() { send_status(false); }
+
+// private methods
 
 char girf::calculate_checksum(char *cmd, int len) {
   int chksum = 0;
@@ -81,43 +90,43 @@ void girf::send_status(bool status_requested) {
       0x02 = defect det     ???                 ???       ???
       0x04 = ???            local alarm         ???       temp sensor 1 defect
       0x08 = btn pressed    wire alarm          ???       ???
-      0x10 = (smoke)alarm   wireless alarm      ???       temp sensor 2 defect
+      0x10 = (smoke?)alarm  wireless alarm      ???       temp sensor 2 defect
       0x20 = battery pwr.   local test alarm    ???       ???
       0x40 = ???            wired test alarm    ???       ???
       0x80 = ???            wirless test alarm  ???       ???
   */
 
-  if (_status_button) {
+  if (_status_local[STATUS_BUTTON]) {
     c[1] += 0x08;
   }
-  if (_status_alarm_local) {
+  if (_status_local[STATUS_ALARM_LOCAL]) {
     c[1] += 0x10;
   }
-  if (_status_battery_powered) {
+  if (_status_local[STATUS_BATTERY_POWERED]) {
     c[1] += 0x20;
   }
 
-  if (_status_battery_low) {
+  if (_status_local[STATUS_BATTERY_LOW]) {
     c[2] += 0x01;
   }
 
-  if (_status_alarm_local) {
+  if (_status_local[STATUS_ALARM_LOCAL]) {
     c[2] += 0x04;
   }
-  if (_status_alarm_wired) {
+  if (_status_local[STATUS_ALARM_WIRED]) {
     c[2] += 0x08;
   }
-  if (_status_alarm_wireless) {
+  if (_status_local[STATUS_ALARM_WIRELESS]) {
     c[2] += 0x10;
   }
 
-  if (_status_alarm_local_test) {
+  if (_status_local[STATUS_ALARM_LOCAL_TEST]) {
     c[2] += 0x20;
   }
-  if (_status_alarm_wired_test) {
+  if (_status_local[STATUS_ALARM_WIRED_TEST]) {
     c[2] += 0x40;
   }
-  if (_status_alarm_wireless_test) {
+  if (_status_local[STATUS_ALARM_WIRELESS_TEST]) {
     c[2] += 0x80;
   }
 
@@ -135,10 +144,10 @@ void girf::send_message(char *cmd) {
   cmd_send_counter = 1;
 }
 
-bool girf::process_command(char *cmd) {
+bool girf::process_message(char *cmd) {
   char msg5[5];
   char msg3[3];
-  int uptime = millis() / 250; // quater seconds
+  int uptime = millis() / 250; // quarter seconds
   switch (cmd[0]) {
   case RF_REQUEST_STATUS:
 #ifdef GIRF_DEBUG
@@ -163,48 +172,53 @@ bool girf::process_command(char *cmd) {
 #endif
     /*
         1. Byte                 2. Byte
-        0x01 = ?                0x01 = Batterie schwach (über Funk)
-        0x02 = ?                0x02 = Paring
+        0x01 = ?                0x01 = battery low (via RF)
+        0x02 = ?                0x02 = pairing
                                 0x04 = ?
-                                0x08 = ? (von Diagnose Software)
-                                0x10 = Alarm (über Funk)
+                                0x08 = ? (via diagnosis software)
+                                0x10 = alarm (via RF)
                                 0x20 = ?
                                 0x40 = ?
-                                0x80 = Testalarm (über Funk)
+                                0x80 = test alarm (via RF)
     */
-    if (_remote_status_battery_low != (cmd[2] & 0x01)) {
-      _remote_status_battery_low = (cmd[2] & 0x01);
+    if (_status_remote[STATUS_REMOTE_BATTERY_LOW] != (cmd[2] & 0x01)) {
+      _status_remote[STATUS_REMOTE_BATTERY_LOW] = (cmd[2] & 0x01);
 #ifdef GIRF_DEBUG
       debug("_OnBatteryWarningHandler called.");
 #endif
       if (_OnBatteryWarningHandler != NULL) {
-        _OnBatteryWarningHandler(_remote_status_battery_low);
+        _OnBatteryWarningHandler(_status_remote[STATUS_REMOTE_BATTERY_LOW] ||
+                                 _status_local[STATUS_BATTERY_LOW]);
       }
-    } else if (_remote_status_pairing != (cmd[2] & 0x02)) {
-      _remote_status_pairing = (cmd[2] & 0x02);
+    } else if (_status_remote[STATUS_REMOTE_PAIRING] != (cmd[2] & 0x02)) {
+      _status_remote[STATUS_REMOTE_PAIRING] = (cmd[2] & 0x02);
 #ifdef GIRF_DEBUG
-      debug("_pairing=" + String(_remote_status_pairing));
+      debug("_pairing=" + String(_status_remote[STATUS_REMOTE_PAIRING]));
 #endif
-    } else if (_remote_status_alarm != (cmd[2] & 0x10)) {
-      _status_alarm_wireless = _remote_status_alarm = (cmd[2] & 0x10);
+    } else if (_status_remote[STATUS_REMOTE_ALARM] != (cmd[2] & 0x10)) {
+      _status_local[STATUS_ALARM_WIRELESS] =
+          _status_local[STATUS_REMOTE_ALARM] = (cmd[2] & 0x10);
 #ifdef GIRF_DEBUG
       debug("_OnAlarmHandler called.");
 #endif
       if (_OnAlarmHandler != NULL) {
-        _OnAlarmHandler(_remote_status_alarm);
+        _OnAlarmHandler(_status_remote[STATUS_REMOTE_ALARM] ||
+                        _status_local[STATUS_ALARM_LOCAL] ||
+                        _status_local[STATUS_ALARM_WIRED] ||
+                        _status_local[STATUS_ALARM_WIRELESS]);
       }
-    } else if (_remote_status_alarm_test != (cmd[2] & 0x80)) {
-      _status_alarm_wireless_test = _remote_status_alarm_test = (cmd[2] & 0x80);
+    } else if (_status_remote[STATUS_REMOTE_ALARM_TEST] != (cmd[2] & 0x80)) {
+      _status_local[STATUS_ALARM_WIRELESS_TEST] =
+          _status_remote[STATUS_REMOTE_ALARM_TEST] = (cmd[2] & 0x80);
 #ifdef GIRF_DEBUG
       debug("_OnAlarmTestHandler called.");
 #endif
       if (_OnAlarmTestHandler != NULL) {
-        _OnAlarmTestHandler(_remote_status_alarm_test);
+        _OnAlarmTestHandler(_status_remote[STATUS_REMOTE_ALARM_TEST] ||
+                            _status_local[STATUS_ALARM_LOCAL_TEST] ||
+                            _status_local[STATUS_ALARM_WIRED_TEST] ||
+                            _status_local[STATUS_ALARM_WIRELESS_TEST]);
       }
-    }
-    // Send initative status
-    if (!_remote_status_pairing) {
-      send_status(false);
     }
     break;
   case RF_DIAGNOSIS:
@@ -250,12 +264,13 @@ bool girf::process_command(char *cmd) {
 #ifdef GIRF_DEBUG
     debug("RF_BATTERY_TEMP");
 #endif
-    // as we emulate the smokedetector there is no magic here
+    // as we emulate the smokedetector there is no magic here (we just send 0x52
+    // two times)
     msg5[0] = 0xCC;
     msg5[1] = 0x00;
     msg5[2] = 0x01;
-    msg5[3] = 0x52;
-    msg5[4] = 0x52;
+    msg5[3] = 0x52; // temp of 1st sensor
+    msg5[4] = 0x52; // temp of 2nd sensor
     send_message(msg5);
     break;
   case RF_ALARM_COUNT:
@@ -334,7 +349,7 @@ void girf::process_byte(char c) {
       // process the command
       if (calculate_checksum(_receive_buffer, strlen(_receive_buffer) - 2) ==
           _received_cmd[sizeof(_received_cmd) - 1]) {
-        if (process_command(_received_cmd)) {
+        if (process_message(_received_cmd)) {
 #ifdef GIRF_DEBUG
           debug("ESP(SD)-ACK");
 #endif
@@ -357,6 +372,8 @@ void girf::process_byte(char c) {
     _receive_buffer[strlen(_receive_buffer)] = c;
   }
 }
+
+// public loop method
 
 void girf::loop() {
   // send out buffered messages and manage resends
@@ -389,9 +406,30 @@ void girf::loop() {
     process_byte(stream.read());
   }
 
-  // handle automatic status updates
+  // handle automatic status updates (if enabled)
   if ((cmd_send_counter == 0) && (StatusUpdateInterval > 0) &&
       ((millis() - status_update_timestamp) >= StatusUpdateInterval * 1000)) {
     send_status(false);
+  }
+
+  // update public status object if private object changed
+  if (!std::equal(std::begin(_status_local), std::end(_status_local),
+                  std::begin(StatusLocal))) {
+#ifdef GIRF_DEBUG
+    debug("Local Status array updated");
+#endif
+    std::copy(std::begin(_status_local), std::end(_status_local),
+              std::begin(StatusLocal));
+    send_status();
+  }
+
+  if (!std::equal(std::begin(_status_remote), std::end(_status_remote),
+                  std::begin(StatusRemote))) {
+#ifdef GIRF_DEBUG
+    debug("Status array updated");
+#endif
+    std::copy(std::begin(_status_remote), std::end(_status_remote),
+              std::begin(StatusRemote));
+    send_status();
   }
 }

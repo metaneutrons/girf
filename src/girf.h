@@ -24,6 +24,10 @@
 // #define GIRF_DEBUG // enable some debugging for the library
 
 #include <Arduino.h>
+#include <array>
+#include <girf.h>
+#include <queue>
+#include <string>
 
 // constant for control bytes
 const char STX = 0x02;
@@ -49,6 +53,30 @@ const char RF_ALARM_COUNT = 0x0D;
 const char RF_TESTALARM_COUNT = 0x0E;
 const char RF_UNKOWN_0F = 0x0F;
 
+// status index
+enum StatusRemoteEnum {
+  STATUS_REMOTE_ALARM,
+  STATUS_REMOTE_ALARM_TEST,
+  STATUS_REMOTE_BATTERY_LOW,
+  STATUS_REMOTE_PAIRING,
+  //
+  STATUS_REMOTE_LAST = STATUS_REMOTE_PAIRING
+};
+
+enum StatusLocalEnum {
+  STATUS_ALARM_LOCAL,
+  STATUS_ALARM_LOCAL_TEST,
+  STATUS_ALARM_WIRED,
+  STATUS_ALARM_WIRED_TEST,
+  STATUS_ALARM_WIRELESS,
+  STATUS_ALARM_WIRELESS_TEST,
+  STATUS_BUTTON,
+  STATUS_BATTERY_LOW,
+  STATUS_BATTERY_POWERED,
+  //
+  STATUS_LOCAL_LAST = STATUS_BATTERY_POWERED
+};
+
 // fake serial number of emulated smoke detector
 const char SD_SERIAL[] = {0xC4, 0x0F, 0xAB, 0x1A, 0x90, 0x00};
 
@@ -68,10 +96,14 @@ public:
   void SetOnAlarmHandler(void (*func)(bool));
   void SetOnAlarmTestHandler(void (*func)(bool));
   void SetOnBatteryWarningHandler(void (*func)(bool));
+  void SendStatus();
   void loop();
   // public variables
   uint32_t StatusUpdateInterval =
       0; // in seconds, 0 means no automatic status updates at all
+  std::array<bool, STATUS_LOCAL_LAST> StatusLocal;
+  std::array<bool, STATUS_REMOTE_LAST> StatusRemote;
+
 private:
 // private functions
 #ifndef GIRF_DEBUG
@@ -82,7 +114,7 @@ private:
 #endif
   void process_byte(char c);
   char calculate_checksum(char *cmd, int len);
-  bool process_command(char *cmd);
+  bool process_message(char *cmd);
   void send_status(bool _status_requested = false);
   void (*_OnDebugHandler)(String);
   void (*_OnAlarmHandler)(bool);
@@ -90,24 +122,14 @@ private:
   void (*_OnBatteryWarningHandler)(bool);
   void hex2str(char *h, char *s);
   void str2hex(char *s, char *h);
+
   // private variables
   Stream &stream;
   char cmd_send[SIZE_SEND_BUFFER]; // NUL-terminated string of hex string values
   uint cmd_send_counter = 0;
   uint32_t cmd_send_timestamp = millis();
   uint32_t status_update_timestamp = millis();
-  bool _status_alarm_local_test = false;
-  bool _status_alarm_local = false;
-  bool _status_alarm_wired_test = false;
-  bool _status_alarm_wired = false;
-  bool _status_alarm_wireless_test = false;
-  bool _status_alarm_wireless = false;
-  bool _status_button = false;
-  bool _status_battery_low = false;
-  bool _status_battery_powered = false;
-  bool _remote_status_battery_low = false;
-  bool _remote_status_pairing = false;
-  bool _remote_status_alarm_test = false;
-  bool _remote_status_alarm = false;
+  std::array<bool, STATUS_LOCAL_LAST> _status_local;
+  std::array<bool, STATUS_REMOTE_LAST> _status_remote;
 };
 #endif
