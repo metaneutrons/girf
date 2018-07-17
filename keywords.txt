@@ -13,10 +13,10 @@ girf	KEYWORD1
 setup	KEYWORD2
 loop	KEYWORD2
 SetOnDebugHandler	KEYWORD2
-SetOnAlarmHandler   KEYWORD2
-SetOnAlarmTestHandler   KEYWORD2
-SetOnBatteryWarningHandler  KEYWORD2
-send_message    KEYWORD2
+SetOnAlarmHandler	KEYWORD2
+SetOnAlarmTestHandler	KEYWORD2
+SetOnBatteryWarningHandler	KEYWORD2
+send_message	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
