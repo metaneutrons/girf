@@ -68,6 +68,8 @@ public:
   void SetOnAlarmHandler(void (*func)(bool));
   void SetOnAlarmTestHandler(void (*func)(bool));
   void SetOnBatteryWarningHandler(void (*func)(bool));
+  void SetLocalAlarm(bool status);
+  void SetLocalTestAlarm(bool status);
   void loop();
   // public variables
 
