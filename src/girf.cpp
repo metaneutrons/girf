@@ -358,6 +358,22 @@ void girf::process_byte(char c) {
   }
 }
 
+void girf::SetLocalAlarm( bool status ){
+  #ifdef GIRF_DEBUG
+    debug("Setting local Alarm");
+  #endif
+  _status_alarm_local = status;
+  send_status( false );
+}
+
+void girf::SetLocalTestAlarm( bool status ){
+  #ifdef GIRF_DEBUG
+    debug("Setting local Test Alarm");
+  #endif
+  _status_alarm_local_test = status;
+  send_status( false );
+}
+
 void girf::loop() {
 
   if ((cmd_send_counter == 1) ||
